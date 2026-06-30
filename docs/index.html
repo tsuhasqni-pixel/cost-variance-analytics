@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>原価差異 統計検証（ブラウザ版）</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand">原価差異 統計検証（静的版）</div>
+    <a href="#" data-tab="dashboard">ダッシュボード</a>
+    <a href="#" data-tab="stats">記述統計 / t検定</a>
+    <a href="#" data-tab="pareto">Pareto</a>
+    <a href="#" data-tab="control">管理図</a>
+    <a href="#" data-tab="trend">トレンド</a>
+    <span class="spacer"></span>
+    <label class="btn ghost" for="fileImport">JSONインポート<input id="fileImport" type="file" accept="application/json" hidden /></label>
+    <button id="btnReset" class="btn danger" type="button">データを破棄</button>
+  </nav>
+
+  <main class="container">
+    <section id="tab-empty" class="tab">
+      <h1>はじめに</h1>
+      <section class="card">
+        <p>internal-accounting のダッシュボード右上の <strong>JSONエクスポート</strong>ボタンで出力したファイルを、上のメニュー「JSONインポート」から読み込んでください。データは localStorage に保存されます。</p>
+        <p class="muted">複数期間分の実績が入っているほど統計検証が意味を持ちます（最低 4 期以上推奨）。</p>
+      </section>
+    </section>
+
+    <section id="tab-dashboard" class="tab" hidden>
+      <h1>ダッシュボード</h1>
+      <section class="card"><h2>サマリ</h2><div id="dashSummary"></div></section>
+      <section class="card"><h2>注目すべき差異シリーズ</h2><div id="dashTop"></div></section>
+      <section class="card"><h2>Pareto 上位</h2><div id="dashPareto"></div></section>
+    </section>
+
+    <section id="tab-stats" class="tab" hidden>
+      <h1>記述統計 / t 検定</h1>
+      <section class="card"><div id="statsTable"></div></section>
+    </section>
+
+    <section id="tab-pareto" class="tab" hidden>
+      <h1>Pareto 分析</h1>
+      <section class="card"><div id="paretoTable"></div></section>
+      <section class="card"><canvas id="paretoChart" height="120"></canvas></section>
+    </section>
+
+    <section id="tab-control" class="tab" hidden>
+      <h1>管理図（I-MR）</h1>
+      <div id="controlContent"></div>
+    </section>
+
+    <section id="tab-trend" class="tab" hidden>
+      <h1>トレンド（単回帰）</h1>
+      <div id="trendContent"></div>
+    </section>
+  </main>
+
+  <footer><small>internal-accounting JSON エクスポート → 統計的差異検証 / 静的版（GitHub Pages）</small></footer>
+  <script src="app.js"></script>
+</body>
+</html>

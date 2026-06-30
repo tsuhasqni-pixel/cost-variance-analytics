@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>ダッシュボード</h1>
+
+<section class="card">
+  <h2>サマリ</h2>
+  <ul class="kv kv-grid">
+    <li><span>製品数</span><b>{{ b.products|length }}</b></li>
+    <li><span>実績件数</span><b>{{ b.actuals|length }}</b></li>
+    <li><span>差異データ点数</span><b>{{ b.rows|length }}</b></li>
+    <li><span>差異シリーズ数</span><b>{{ b.descriptive|length }}</b></li>
+  </ul>
+  {% if b.sensitivity %}
+  <h3>CVP 連携 — 感度</h3>
+  <ul class="kv kv-grid">
+    <li><span>売上高（CVP合計）</span><b>{{ b.sensitivity.total_sales|yen }}</b></li>
+    <li><span>限界利益率</span><b>{{ b.sensitivity.cm_ratio|pct }}</b></li>
+    <li><span>不利差異合計</span><b>{{ b.sensitivity.unfav_total|yen }}</b></li>
+    <li><span>不利差異1%増 → 営業利益影響</span><b>{{ b.sensitivity.income_impact_1pct|yen }}</b></li>
+  </ul>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>注目すべき差異シリーズ（有意 / 大きい）</h2>
+  {% if b.descriptive %}
+  <table class="grid">
+    <thead><tr><th>製品</th><th>差異種別</th><th>n</th><th>平均</th><th>SD</th><th>t</th><th>p値</th><th>判定</th></tr></thead>
+    <tbody>
+      {% for d in b.descriptive|sort(attribute='p_value') %}
+      <tr>
+        <td>{{ d.product_name }}</td>
+        <td>{{ d.category }}</td>
+        <td>{{ d.n }}</td>
+        <td class="right">{{ d.mean|signed_yen }}</td>
+        <td class="right">{{ d.stdev|yen }}</td>
+        <td class="right">{{ d.t_stat|round3 }}</td>
+        <td class="right">{{ d.p_value|round3 }}</td>
+        <td>
+          {% if d.significant %}<span class="badge sign-unfav">有意</span>
+          {% else %}<span class="badge sign-zero">非有意</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">データが不足しています（最低2期分の差異が必要）。</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Pareto 上位</h2>
+  {% if b.pareto %}
+  <table class="grid">
+    <thead><tr><th>順位</th><th>製品</th><th>差異種別</th><th>不利合計</th><th>シェア</th><th>累積</th></tr></thead>
+    <tbody>
+    {% for p in b.pareto[:10] %}
+    <tr>
+      <td>{{ p.rank }}</td>
+      <td>{{ p.product_name }}</td>
+      <td>{{ p.category }}</td>
+      <td class="right">{{ p.total|yen }}</td>
+      <td class="right">{{ p.share|pct }}</td>
+      <td class="right">{{ p.cum_share|pct }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">不利差異がありません。</p>{% endif %}
+</section>
+{% endblock %}

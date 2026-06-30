@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>トレンド（期間別差異 + 単回帰）</h1>
+<p class="muted">期間順に差異をプロットし、直線回帰の傾きと p 値を表示します。傾きが負＝改善、正＝悪化トレンド。</p>
+
+{% for t in b.trends %}
+<section class="card">
+  <h2>{{ t.product_name }} — {{ t.category }} <small class="muted">(n={{ t.n }})</small></h2>
+  <ul class="kv kv-grid">
+    <li><span>傾き</span><b>{{ t.slope|round3 }}</b></li>
+    <li><span>切片</span><b>{{ t.intercept|round3 }}</b></li>
+    <li><span>R²</span><b>{{ t.r_squared|round3 }}</b></li>
+    <li><span>p値</span><b>{{ t.p_value|round3 }}</b></li>
+    <li>
+      <span>解釈</span>
+      <b>
+        {% if t.slope > 0 and t.p_value < 0.05 %}<span class="badge sign-unfav">悪化トレンド</span>
+        {% elif t.slope < 0 and t.p_value < 0.05 %}<span class="badge sign-fav">改善トレンド</span>
+        {% else %}<span class="badge sign-zero">変化なし</span>{% endif %}
+      </b>
+    </li>
+  </ul>
+  <canvas id="tr_{{ loop.index }}" height="100"></canvas>
+  <script>
+    (window.__trends = window.__trends || []).push({
+      id: "tr_{{ loop.index }}",
+      label: "{{ t.product_name }} — {{ t.category }}",
+      periods: {{ t['periods']|tojson }},
+      values: {{ t['values']|tojson }},
+      slope: {{ t['slope']|tojson }},
+      intercept: {{ t['intercept']|tojson }}
+    });
+  </script>
+</section>
+{% else %}
+<p class="muted">2 期以上の差異データがある系列がありません。</p>
+{% endfor %}
+{% endblock %}

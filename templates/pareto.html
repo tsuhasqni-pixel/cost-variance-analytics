@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Pareto 分析（不利差異 ABC）</h1>
+<p class="muted">不利差異だけを集計し、寄与の大きい (製品×差異種別) を上位から並べます。累積80%までを A ランクとして対策対象に。</p>
+
+<section class="card">
+  <table class="grid">
+    <thead><tr><th>順位</th><th>製品</th><th>差異種別</th><th>不利合計</th><th>シェア</th><th>累積</th><th>ABC</th></tr></thead>
+    <tbody>
+    {% for p in b.pareto %}
+    <tr>
+      <td>{{ p.rank }}</td>
+      <td>{{ p.product_name }}</td>
+      <td>{{ p.category }}</td>
+      <td class="right">{{ p.total|yen }}</td>
+      <td class="right">{{ p.share|pct }}</td>
+      <td class="right">{{ p.cum_share|pct }}</td>
+      <td>
+        {% if p.cum_share <= 0.8 %}<span class="badge sign-unfav">A</span>
+        {% elif p.cum_share <= 0.95 %}<span class="badge sign-zero">B</span>
+        {% else %}<span class="badge sign-fav">C</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <canvas id="paretoChart" height="120"></canvas>
+  <script>
+    window.__pareto = {{ b.pareto|tojson }};
+  </script>
+</section>
+{% endblock %}

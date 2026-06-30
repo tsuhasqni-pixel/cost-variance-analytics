@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>原価差異 統計検証レポート</title>
+  <style>
+    body { font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; color: #1f2933; background: #f7f8fa; margin: 0; }
+    .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.5rem; }
+    .card { background: #fff; border: 1px solid #e4e7eb; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+    h1 { margin-top: 0; }
+    h2 { margin-top: 1.25rem; border-bottom: 1px solid #e4e7eb; padding-bottom: .25rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #e4e7eb; padding: .4rem .6rem; font-size: .9rem; }
+    th { background: #f9fafb; text-align: left; }
+    td.right { text-align: right; font-variant-numeric: tabular-nums; }
+    .badge { display: inline-block; padding: .1rem .5rem; border-radius: 12px; font-size: .8rem; font-weight: 600; }
+    .sign-unfav { background: #fee2e2; color: #b91c1c; }
+    .sign-fav { background: #d1fae5; color: #047857; }
+    .sign-zero { background: #f3f4f6; color: #6b7280; }
+    ul.kv { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1.25rem; }
+    ul.kv li { display: flex; justify-content: space-between; padding: .3rem 0; border-bottom: 1px dashed #e4e7eb; }
+    ul.kv span { color: #6b7280; }
+    ul.kv b { font-variant-numeric: tabular-nums; }
+    .muted { color: #6b7280; }
+    .small { font-size: .85rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>原価差異 統計検証レポート</h1>
+
+<section class="card">
+  <h2>サマリ</h2>
+  <ul class="kv">
+    <li><span>製品数</span><b>{{ b.products|length }}</b></li>
+    <li><span>実績件数</span><b>{{ b.actuals|length }}</b></li>
+    <li><span>差異データ点数</span><b>{{ b.rows|length }}</b></li>
+    <li><span>差異シリーズ数</span><b>{{ b.descriptive|length }}</b></li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>記述統計 & 1サンプル t 検定</h2>
+  <table>
+    <thead><tr>
+      <th>製品</th><th>差異種別</th><th>n</th>
+      <th>平均</th><th>中央値</th><th>SD</th><th>min</th><th>max</th>
+      <th>t</th><th>p</th><th>判定</th>
+    </tr></thead>
+    <tbody>
+    {% for d in b.descriptive %}
+    <tr>
+      <td>{{ d.product_name }}</td><td>{{ d.category }}</td><td>{{ d.n }}</td>
+      <td class="right">{{ d.mean|signed_yen }}</td>
+      <td class="right">{{ d.median|signed_yen }}</td>
+      <td class="right">{{ d.stdev|yen }}</td>
+      <td class="right">{{ d.min|signed_yen }}</td>
+      <td class="right">{{ d.max|signed_yen }}</td>
+      <td class="right">{{ d.t_stat|round3 }}</td>
+      <td class="right">{{ d.p_value|round3 }}</td>
+      <td>
+        {% if d.significant and d.mean > 0 %}<span class="badge sign-unfav">有意・不利</span>
+        {% elif d.significant and d.mean < 0 %}<span class="badge sign-fav">有意・有利</span>
+        {% else %}<span class="badge sign-zero">非有意</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Pareto 分析</h2>
+  <table>
+    <thead><tr><th>順位</th><th>製品</th><th>差異種別</th><th>不利合計</th><th>シェア</th><th>累積</th></tr></thead>
+    <tbody>
+    {% for p in b.pareto %}
+    <tr><td>{{ p.rank }}</td><td>{{ p.product_name }}</td><td>{{ p.category }}</td>
+        <td class="right">{{ p.total|yen }}</td>
+        <td class="right">{{ p.share|pct }}</td>
+        <td class="right">{{ p.cum_share|pct }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>管理図（I-MR）</h2>
+  {% for c in b.control_charts %}
+  <h3>{{ c.product_name }} — {{ c.category }} (n={{ c.n }})</h3>
+  <ul class="kv">
+    <li><span>平均</span><b>{{ c.mean|signed_yen }}</b></li>
+    <li><span>UCL_I</span><b>{{ c.ucl_i|signed_yen }}</b></li>
+    <li><span>LCL_I</span><b>{{ c.lcl_i|signed_yen }}</b></li>
+    <li><span>MR̄</span><b>{{ c.mr_bar|yen }}</b></li>
+    <li><span>OOC 数</span><b>{{ c.out_of_control_indices|length }}</b></li>
+  </ul>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <h2>トレンド（単回帰）</h2>
+  <table>
+    <thead><tr><th>製品</th><th>差異種別</th><th>n</th><th>傾き</th><th>切片</th><th>R²</th><th>p</th></tr></thead>
+    <tbody>
+    {% for t in b.trends %}
+    <tr><td>{{ t.product_name }}</td><td>{{ t.category }}</td><td>{{ t.n }}</td>
+        <td class="right">{{ t.slope|round3 }}</td>
+        <td class="right">{{ t.intercept|round3 }}</td>
+        <td class="right">{{ t.r_squared|round3 }}</td>
+        <td class="right">{{ t.p_value|round3 }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if b.sensitivity %}
+<section class="card">
+  <h2>CVP 感度</h2>
+  <ul class="kv">
+    <li><span>売上高（CVP合計）</span><b>{{ b.sensitivity.total_sales|yen }}</b></li>
+    <li><span>限界利益率</span><b>{{ b.sensitivity.cm_ratio|pct }}</b></li>
+    <li><span>不利差異合計</span><b>{{ b.sensitivity.unfav_total|yen }}</b></li>
+    <li><span>不利差異1%増 → 営業利益影響</span><b>{{ b.sensitivity.income_impact_1pct|yen }}</b></li>
+  </ul>
+</section>
+{% endif %}
+</div>
+</body>
+</html>

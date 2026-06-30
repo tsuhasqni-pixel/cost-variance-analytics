@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}原価差異 統計検証{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand">原価差異 統計検証</div>
+    <a href="{{ url_for('dashboard') }}">ダッシュボード</a>
+    <a href="{{ url_for('stats_page') }}">記述統計 / t検定</a>
+    <a href="{{ url_for('pareto_page') }}">Pareto</a>
+    <a href="{{ url_for('control_page') }}">管理図 (I-MR)</a>
+    <a href="{{ url_for('trend_page') }}">トレンド</a>
+    <span class="spacer"></span>
+    <form method="post" action="{{ url_for('reset') }}" style="display:inline" onsubmit="return confirm('読込済みデータを破棄します。よろしいですか?');">
+      <button class="btn ghost" type="submit">データを破棄</button>
+    </form>
+    <a class="btn ghost" href="{{ url_for('index') }}">再アップロード</a>
+  </nav>
+  <main class="container">{% block content %}{% endblock %}</main>
+  <footer><small>internal-accounting JSON エクスポート → 統計的差異検証</small></footer>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

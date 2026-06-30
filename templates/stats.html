@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>記述統計 / t 検定</h1>
+<p class="muted">各「製品 × 差異種別」シリーズについて、平均・SD・min/max と「H0: 平均差異 = 0」の 1 サンプル t 検定結果を表示します。95% 信頼区間と効果の方向で改善優先度を判断してください。</p>
+
+<section class="card">
+  <table class="grid">
+    <thead><tr>
+      <th>製品</th><th>差異種別</th><th>n</th>
+      <th>平均</th><th>中央値</th><th>SD</th><th>min</th><th>max</th><th>合計</th>
+      <th>t</th><th>p</th><th>95%CI</th><th>判定</th>
+    </tr></thead>
+    <tbody>
+    {% for d in b.descriptive %}
+    <tr>
+      <td>{{ d.product_name }}</td>
+      <td>{{ d.category }}</td>
+      <td>{{ d.n }}</td>
+      <td class="right">{{ d.mean|signed_yen }}</td>
+      <td class="right">{{ d.median|signed_yen }}</td>
+      <td class="right">{{ d.stdev|yen }}</td>
+      <td class="right">{{ d.min|signed_yen }}</td>
+      <td class="right">{{ d.max|signed_yen }}</td>
+      <td class="right">{{ d.sum|signed_yen }}</td>
+      <td class="right">{{ d.t_stat|round3 }}</td>
+      <td class="right">{{ d.p_value|round3 }}</td>
+      <td class="right small">{{ d.ci95_low|signed_yen }} 〜 {{ d.ci95_high|signed_yen }}</td>
+      <td>
+        {% if d.significant and d.mean > 0 %}<span class="badge sign-unfav">有意・不利</span>
+        {% elif d.significant and d.mean < 0 %}<span class="badge sign-fav">有意・有利</span>
+        {% else %}<span class="badge sign-zero">非有意</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
